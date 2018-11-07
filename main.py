@@ -11,8 +11,8 @@ all_sprites = pygame.sprite.Group()
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((50, 40))
-        self.image.fill(BLUE)
+        self.image = pygame.transform.scale(player_img, (50, 38))
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = HEIGHT - 10
@@ -38,8 +38,8 @@ class Player(pygame.sprite.Sprite):
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((30, 40))
-        self.image.fill(RED)
+        self.image = meteor_img
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(WIDTH - self.rect.width)
         self.rect.y = random.randrange(-100, -50)
@@ -58,8 +58,8 @@ class Enemy(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((10, 20))
-        self.image.fill(GREEN)
+        self.image = laser_img
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.centerx = x
         self.rect.bottom = y
@@ -69,6 +69,15 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y += self.speedy
         if self.rect.y < 0:
             self.kill()
+
+
+# Load all graphics
+BG = pygame.image.load(path.join(img_dir, "bg.png")).convert()
+BG_rect = BG.get_rect()
+player_img = pygame.image.load(path.join(img_dir, "playerShip1_blue.png")).convert()
+meteor_img = pygame.image.load(path.join(img_dir, "meteorBrown_med1.png")).convert()
+laser_img = pygame.image.load(path.join(img_dir, "laserRed.png")).convert()
+
 
 all_sprites = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
@@ -106,6 +115,7 @@ while running:
 
     # Draw / render
     screen.fill(BLACK)
+    screen.blit(BG, BG_rect)
     all_sprites.draw(screen)
     # flip the display
     pygame.display.flip()
