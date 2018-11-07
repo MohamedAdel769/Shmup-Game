@@ -2,9 +2,9 @@ import pygame
 import random
 
 Title = "ShmupGame"
-WIDTH = 360
-HEIGHT = 480
-FPS = 30
+WIDTH = 480
+HEIGHT = 600
+FPS = 60
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
