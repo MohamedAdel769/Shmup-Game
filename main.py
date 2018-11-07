@@ -17,6 +17,19 @@ def draw_text(surf, text, size, x, y):
     text_rect.midtop = (x, y)
     surf.blit(text_surf, text_rect)
 
+def newEnemy():
+    enem = Enemy()
+    enemies.add(enem)
+    all_sprites.add(enem)
+
+def draw_Health_bar(surf, x, y, percentage):
+    if percentage < 0:
+        percentage = 0
+    fill = (percentage / 100) * BAR_LENGTH
+    border_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
+    fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
+    pygame.draw.rect(surf, GREEN, fill_rect)
+    pygame.draw.rect(surf, WHITE, border_rect, 2)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -28,6 +41,9 @@ class Player(pygame.sprite.Sprite):
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = HEIGHT - 10
         self.speedX = 0
+        self.Health = HEALTH
+        self.shoot_delay = 250
+        self.last_shoot = pygame.time.get_ticks()
 
     def update(self):
         self.speedX = 0
@@ -36,6 +52,8 @@ class Player(pygame.sprite.Sprite):
             self.speedX -= 8
         if keystate[pygame.K_RIGHT] or keystate[pygame.K_d]:
             self.speedX += 8
+        if keystate[pygame.K_SPACE]:
+            self.shoot()
         self.rect.x += self.speedX
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
@@ -43,10 +61,13 @@ class Player(pygame.sprite.Sprite):
             self.rect.left = 0
 
     def shoot(self):
-        b = Bullet(self.rect.centerx, self.rect.top)
-        all_sprites.add(b)
-        bullets.add(b)
-        shoot_snd.play()
+        now = pygame.time.get_ticks()
+        if now - self.last_shoot > self.shoot_delay:
+            self.last_shoot = now
+            b = Bullet(self.rect.centerx, self.rect.top)
+            all_sprites.add(b)
+            bullets.add(b)
+            shoot_snd.play()
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -102,6 +123,30 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
 
+class Explosions(pygame.sprite.Sprite):
+    def __init__(self, center, size):
+        pygame.sprite.Sprite.__init__(self)
+        self.size = size
+        self.image = explosion_img[self.size][0]
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+        self.frame = 0
+        self.frame_rate = 45
+        self.last_update = pygame.time.get_ticks()
+
+    def update(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > self.frame_rate:
+            self.last_update = now
+            self.frame += 1
+            if self.frame == len(explosion_img[self.size]):
+                self.kill()
+            else:
+                old_center = self.rect.center
+                self.image = explosion_img[self.size][self.frame]
+                self.rect = self.image.get_rect()
+                self.rect.center = old_center
+
 # Load all graphics
 BG = pygame.image.load(path.join(img_dir, "bg.png")).convert()
 BG_rect = BG.get_rect()
@@ -113,9 +158,23 @@ meteor_list = ['meteorBrown_big4.png', 'meteorBrown_med1.png', 'meteorBrown_smal
                'meteorGrey_small2.png', 'meteorGrey_tiny2.png']
 for img in meteor_list:
     meteor_imgs.append(pygame.image.load(path.join(img_dir, img)).convert())
+explosion_img = {}
+explosion_img['large'] = []
+explosion_img['small'] = []
+for i in range(9):
+    filename = 'regularExplosion0{}.png'.format(i)
+    img = pygame.image.load(path.join(img_dir, filename)).convert()
+    img.set_colorkey(BLACK)
+    sm_img = pygame.transform.scale(img, (32, 32))
+    lg_img = pygame.transform.scale(img, (70, 70))
+    explosion_img['large'].append(lg_img)
+    explosion_img['small'].append(sm_img)
+
 
 # Load all sounds
-shoot_snd = pygame.mixer.Sound(path.join(snd_dir, 'Hit_Hurt2.wav'))
+shoot_snd = pygame.mixer.Sound(path.join(snd_dir, 'Hit_Hurt8.wav'))
+exp_snd = pygame.mixer.Sound(path.join(snd_dir, 'Hit_Hurt105.wav'))
+exp_snd.set_volume(0.1)
 expl_snd = []
 expl_snd.append(pygame.mixer.Sound(path.join(snd_dir, 'Explosion4.wav')))
 expl_snd.append(pygame.mixer.Sound(path.join(snd_dir, 'Explosion3.wav')))
@@ -128,9 +187,7 @@ bullets = pygame.sprite.Group()
 player = Player()
 all_sprites.add(player)
 for i in range(8):
-    enem = Enemy()
-    enemies.add(enem)
-    all_sprites.add(enem)
+   newEnemy()
 
 # Game loop
 pygame.mixer.music.play(loops=-1)
@@ -142,14 +199,12 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                player.shoot()
 
     # Update
     all_sprites.update()
 
     # Check for collision
+    # bullet hit an enemy
     Bhits = pygame.sprite.groupcollide(enemies, bullets, True, True)
     for hit in Bhits:
         if hit.radius > 15:
@@ -157,18 +212,26 @@ while running:
         else:
             score += 10
         random.choice(expl_snd).play()
-        enem = Enemy()
-        enemies.add(enem)
-        all_sprites.add(enem)
-    hits = pygame.sprite.spritecollide(player, enemies, False, pygame.sprite.collide_circle)
-    if hits:
-        running = False
+        Exp = Explosions(hit.rect.center, 'large')
+        all_sprites.add(Exp)
+        newEnemy()
+    # enemy hit the player
+    hits = pygame.sprite.spritecollide(player, enemies, True, pygame.sprite.collide_circle)
+    for hit in hits:
+        player.Health -= hit.radius
+        Exp = Explosions(hit.rect.center, 'small')
+        all_sprites.add(Exp)
+        exp_snd.play()
+        newEnemy()
+        if player.Health <= 0:
+            running = False
 
     # Draw / render
     screen.fill(BLACK)
     screen.blit(BG, BG_rect)
     all_sprites.draw(screen)
     draw_text(screen, str(score), 18, WIDTH / 2, 10)
+    draw_Health_bar(screen, 5, 5, player.Health)
     # flip the display
     pygame.display.flip()
 

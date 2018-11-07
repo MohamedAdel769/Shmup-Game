@@ -11,6 +11,9 @@ Title = "ShmupGame"
 WIDTH = 480
 HEIGHT = 600
 FPS = 60
+HEALTH = 100
+BAR_LENGTH = 100
+BAR_HEIGHT = 10
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
