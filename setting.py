@@ -1,5 +1,8 @@
 import pygame
 import random
+from os import path
+
+img_dir = path.join(path.dirname(__file__), 'Images')
 
 Title = "ShmupGame"
 WIDTH = 480
