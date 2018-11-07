@@ -3,7 +3,9 @@ import random
 from os import path
 
 img_dir = path.join(path.dirname(__file__), 'Images')
+font_dir = path.join(path.dirname(__file__), 'Fonts')
 
+font_name = 'Hokjesgeest.ttf'
 Title = "ShmupGame"
 WIDTH = 480
 HEIGHT = 600
