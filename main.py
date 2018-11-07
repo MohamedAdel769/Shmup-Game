@@ -30,6 +30,11 @@ class Player(pygame.sprite.Sprite):
             self.rect.right = WIDTH
         if self.rect.left < 0:
             self.rect.left = 0
+
+    def shoot(self):
+        b = Bullet(self.rect.centerx, self.rect.top)
+        all_sprites.add(b)
+        bullets.add(b)
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -50,8 +55,24 @@ class Enemy(pygame.sprite.Sprite):
             self.speedx = random.randrange(-2, 2)
             self.speedy = random.randrange(3, 8)
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((10, 20))
+        self.image.fill(GREEN)
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.bottom = y
+        self.speedy = -10
+
+    def update(self):
+        self.rect.y += self.speedy
+        if self.rect.y < 0:
+            self.kill()
+
 all_sprites = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 player = Player()
 all_sprites.add(player)
 for i in range(8):
@@ -66,9 +87,22 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                player.shoot()
 
     # Update
     all_sprites.update()
+
+    # Check for collision
+    Bhits = pygame.sprite.groupcollide(bullets, enemies, True, True)
+    for hit in Bhits:
+        enem = Enemy()
+        enemies.add(enem)
+        all_sprites.add(enem)
+    hits = pygame.sprite.spritecollide(player, enemies, False)
+    if hits:
+        running = False
 
     # Draw / render
     screen.fill(BLACK)
