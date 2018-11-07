@@ -46,6 +46,9 @@ class Player(pygame.sprite.Sprite):
         b = Bullet(self.rect.centerx, self.rect.top)
         all_sprites.add(b)
         bullets.add(b)
+        shoot_snd.play()
+
+
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -111,6 +114,14 @@ meteor_list = ['meteorBrown_big4.png', 'meteorBrown_med1.png', 'meteorBrown_smal
 for img in meteor_list:
     meteor_imgs.append(pygame.image.load(path.join(img_dir, img)).convert())
 
+# Load all sounds
+shoot_snd = pygame.mixer.Sound(path.join(snd_dir, 'Hit_Hurt2.wav'))
+expl_snd = []
+expl_snd.append(pygame.mixer.Sound(path.join(snd_dir, 'Explosion4.wav')))
+expl_snd.append(pygame.mixer.Sound(path.join(snd_dir, 'Explosion3.wav')))
+pygame.mixer.music.load(path.join(snd_dir, 'tgfcoder-FrozenJam-SeamlessLoop.ogg'))
+pygame.mixer.music.set_volume(0.1)
+
 all_sprites = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
@@ -122,6 +133,7 @@ for i in range(8):
     all_sprites.add(enem)
 
 # Game loop
+pygame.mixer.music.play(loops=-1)
 score = 0
 running = True
 while running:
@@ -144,6 +156,7 @@ while running:
             score += 5
         else:
             score += 10
+        random.choice(expl_snd).play()
         enem = Enemy()
         enemies.add(enem)
         all_sprites.add(enem)
