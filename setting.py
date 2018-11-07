@@ -4,6 +4,7 @@ from os import path
 
 img_dir = path.join(path.dirname(__file__), 'Images')
 font_dir = path.join(path.dirname(__file__), 'Fonts')
+snd_dir = path.join(path.dirname(__file__), 'Sounds')
 
 font_name = 'Hokjesgeest.ttf'
 Title = "ShmupGame"
