@@ -8,6 +8,16 @@ pygame.display.set_caption(Title)
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 
+
+
+def draw_text(surf, text, size, x, y):
+    font = pygame.font.Font(path.join(font_dir, font_name), size)
+    text_surf = font.render(text, True, WHITE)
+    text_rect = text_surf.get_rect()
+    text_rect.midtop = (x, y)
+    surf.blit(text_surf, text_rect)
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -110,7 +120,9 @@ for i in range(8):
     enem = Enemy()
     enemies.add(enem)
     all_sprites.add(enem)
+
 # Game loop
+score = 0
 running = True
 while running:
     clock.tick(FPS)
@@ -126,8 +138,12 @@ while running:
     all_sprites.update()
 
     # Check for collision
-    Bhits = pygame.sprite.groupcollide(bullets, enemies, True, True)
+    Bhits = pygame.sprite.groupcollide(enemies, bullets, True, True)
     for hit in Bhits:
+        if hit.radius > 15:
+            score += 5
+        else:
+            score += 10
         enem = Enemy()
         enemies.add(enem)
         all_sprites.add(enem)
@@ -139,6 +155,7 @@ while running:
     screen.fill(BLACK)
     screen.blit(BG, BG_rect)
     all_sprites.draw(screen)
+    draw_text(screen, str(score), 18, WIDTH / 2, 10)
     # flip the display
     pygame.display.flip()
 
