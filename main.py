@@ -209,9 +209,9 @@ class PowerUps(pygame.sprite.Sprite):
 
 def Show_menu():
     screen.blit(BG2, BG2_rect)
-    draw_text(screen, "SHMUP!", 55, WIDTH / 2, HEIGHT / 4)
-    draw_text(screen, "Arrow Keys to Move, Space to Shoot", 14, WIDTH / 2, HEIGHT / 2)
-    draw_text(screen, "Press any key to START", 15, WIDTH / 2, HEIGHT * 3 / 4)
+    draw_text(screen, "SHMUP!", 55, WIDTH / 2, HEIGHT / 5)
+    draw_text(screen, "Arrow Keys to Move, Space to Shoot", 14, WIDTH / 2, HEIGHT / 2 - 40)
+    draw_text(screen, "Press any key to START", 15, WIDTH / 2, HEIGHT / 2 + 50)
     pygame.display.flip()
     waiting = True
     while waiting:
