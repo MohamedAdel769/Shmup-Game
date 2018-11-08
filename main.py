@@ -1,5 +1,5 @@
 from setting import *
-
+import  sys
 # initialize pygame and create window
 pygame.init()
 pygame.mixer.init()
@@ -11,7 +11,7 @@ all_sprites = pygame.sprite.Group()
 
 def draw_text(surf, text, size, x, y):
     font = pygame.font.Font(path.join(font_dir, font_name), size)
-    text_surf = font.render(text, True, WHITE)
+    text_surf = font.render(text, True, YELLOW)
     text_rect = text_surf.get_rect()
     text_rect.midtop = (x, y)
     surf.blit(text_surf, text_rect)
@@ -40,6 +40,7 @@ def draw_lives(surf, imag, x, y, lives):
         img_rect.y = y
         surf.blit(imag, img_rect)
 
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -56,8 +57,14 @@ class Player(pygame.sprite.Sprite):
         self.lives = 3
         self.hidden = False
         self.last_hide = pygame.time.get_ticks()
+        self.pow_level = 1
+        self.pow_upd = pygame.time.get_ticks()
 
     def update(self):
+        if self.pow_level >= 2 and pygame.time.get_ticks() - self.pow_upd > POWER_UP_TIME:
+            self.pow_level -= 1
+            self.pow_upd = pygame.time.get_ticks()
+
         now = pygame.time.get_ticks()
         if self.hidden and now - self.last_hide > 1350:
             self.hidden = False
@@ -82,15 +89,27 @@ class Player(pygame.sprite.Sprite):
         now = pygame.time.get_ticks()
         if now - self.last_shoot > self.shoot_delay:
             self.last_shoot = now
-            b = Bullet(self.rect.centerx, self.rect.top)
-            all_sprites.add(b)
-            bullets.add(b)
+            if self.pow_level == 1:
+                b = Bullet(self.rect.centerx, self.rect.top)
+                all_sprites.add(b)
+                bullets.add(b)
+            elif self.pow_level >= 2:
+                b1 = Bullet(self.rect.left, self.rect.centery)
+                b2 = Bullet(self.rect.right, self.rect.centery)
+                all_sprites.add(b1)
+                all_sprites.add(b2)
+                bullets.add(b1)
+                bullets.add(b2)
             shoot_snd.play()
 
     def hide(self):
         self.hidden = True
         self.last_hide = pygame.time.get_ticks()
         self.rect.center = (WIDTH / 2, HEIGHT + 300)
+
+    def powerUp(self):
+        self.pow_level += 1
+        self.pow_upd = pygame.time.get_ticks()
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -171,9 +190,51 @@ class Explosions(pygame.sprite.Sprite):
                 self.rect = self.image.get_rect()
                 self.rect.center = old_center
 
+
+class PowerUps(pygame.sprite.Sprite):
+    def __init__(self, center):
+        pygame.sprite.Sprite.__init__(self)
+        self.type = random.choice(['shield', 'bolt'])
+        self.image = pow_img[self.type]
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+        self.speedy = 2
+
+    def update(self):
+        self.rect.y += self.speedy
+        if self.rect.top > HEIGHT:
+            self.kill()
+
+
+def Show_menu():
+    screen.blit(BG2, BG2_rect)
+    draw_text(screen, "SHMUP!", 55, WIDTH / 2, HEIGHT / 4)
+    draw_text(screen, "Arrow Keys to Move, Space to Shoot", 14, WIDTH / 2, HEIGHT / 2)
+    draw_text(screen, "Press any key to START", 15, WIDTH / 2, HEIGHT * 3 / 4)
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYUP:
+                waiting = False
+    pygame.mixer.music.load(path.join(snd_dir, 'tgfcoder-FrozenJam-SeamlessLoop.ogg'))
+    pygame.mixer.music.set_volume(0.05)
+    pygame.mixer.music.play(loops=-1)
+
 # Load all graphics
+pow_img = {}
+pow_img['shield'] = pygame.image.load(path.join(img_dir, 'shield_gold.png')).convert()
+pow_img['bolt'] = pygame.image.load(path.join(img_dir, 'bolt_gold.png')).convert()
+shield_img = pygame.image.load(path.join(img_dir, 'spr_shield.png')).convert()
 BG = pygame.image.load(path.join(img_dir, "bg.png")).convert()
 BG_rect = BG.get_rect()
+BG2 = pygame.image.load(path.join(img_dir, "rsz_bg3.png")).convert()
+BG2_rect = BG2.get_rect()
 player_img = pygame.image.load(path.join(img_dir, "playerShip1_blue.png")).convert()
 player_Mini_img = pygame.transform.scale(player_img, (25, 19))
 player_Mini_img.set_colorkey(BLACK)
@@ -204,28 +265,36 @@ for i in range(9):
 
 # Load all sounds
 shoot_snd = pygame.mixer.Sound(path.join(snd_dir, 'Hit_Hurt8.wav'))
+pow_S_snd = pygame.mixer.Sound(path.join(snd_dir, 'shield_pow.wav'))
+pow_B_snd = pygame.mixer.Sound(path.join(snd_dir, 'bolt_pow.wav'))
 exp_snd = pygame.mixer.Sound(path.join(snd_dir, 'Hit_Hurt105.wav'))
 death_snd = pygame.mixer.Sound(path.join(snd_dir, 'death_snd.ogg'))
 exp_snd.set_volume(0.1)
 expl_snd = []
 expl_snd.append(pygame.mixer.Sound(path.join(snd_dir, 'Explosion4.wav')))
 expl_snd.append(pygame.mixer.Sound(path.join(snd_dir, 'Explosion3.wav')))
-pygame.mixer.music.load(path.join(snd_dir, 'tgfcoder-FrozenJam-SeamlessLoop.ogg'))
-pygame.mixer.music.set_volume(0.1)
+pygame.mixer.music.load(path.join(snd_dir, 'e.ogg'))
+pygame.mixer.music.set_volume(0.5)
 
-all_sprites = pygame.sprite.Group()
-enemies = pygame.sprite.Group()
-bullets = pygame.sprite.Group()
-player = Player()
-all_sprites.add(player)
-for i in range(8):
-   newEnemy()
 
-# Game loop
 pygame.mixer.music.play(loops=-1)
-score = 0
+# Game loop
 running = True
+game_over = True
 while running:
+    if game_over:
+        Show_menu()
+        game_over = False
+        score = 0
+        all_sprites = pygame.sprite.Group()
+        enemies = pygame.sprite.Group()
+        bullets = pygame.sprite.Group()
+        powerups = pygame.sprite.Group()
+        player = Player()
+        all_sprites.add(player)
+        for i in range(8):
+            newEnemy()
+
     clock.tick(FPS)
     # Process input (events)
     for event in pygame.event.get():
@@ -246,6 +315,10 @@ while running:
         random.choice(expl_snd).play()
         Exp = Explosions(hit.rect.center, 'large')
         all_sprites.add(Exp)
+        if random.random() > 0.91:
+            pow = PowerUps(hit.rect.center)
+            all_sprites.add(pow)
+            powerups.add(pow)
         newEnemy()
     # enemy hit the player
     hits = pygame.sprite.spritecollide(player, enemies, True, pygame.sprite.collide_circle)
@@ -262,9 +335,20 @@ while running:
             player.hide()
             player.Health = 100
             player.lives -= 1
-
     if player.lives == 0 and not expl.alive():
-        running = False
+        game_over = True
+
+    # player take a power up
+    hits = pygame.sprite.spritecollide(player, powerups, True)
+    for hit in hits:
+        if hit.type == 'shield':
+            player.Health = (player.Health + 15)
+            if player.Health > 100:
+                player.Health = 100
+            pow_S_snd.play()
+        elif hit.type == 'bolt':
+            player.powerUp()
+            pow_B_snd.play()
 
     # Draw / render
     screen.fill(BLACK)
