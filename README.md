@@ -1,2 +1,2 @@
 # Shmup-Game
-a Shoot 'em up game using Python
+a simple Shoot 'em up game using Python
